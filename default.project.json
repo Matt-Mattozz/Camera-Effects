@@ -1,0 +1,14 @@
+{
+  "name": "Camera effects",
+  "tree": {
+    "$className": "DataModel",
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "CameraEffects": {
+          "$path": "src"
+        }
+      }
+    }
+  }
+}
