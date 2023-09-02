@@ -40,7 +40,7 @@ CameraEffects.effectsConnections = {}
 CameraEffects.effectsList = (function()
     local effectsArray = {}
     for _, effectModule in ipairs(script:GetChildren()) do
-        effectsArray[effectModule.Name] = require(CameraEffects.effectsList)
+        effectsArray[effectModule.Name] = require(effectModule)
     end
     return effectsArray
 end)()
@@ -83,22 +83,22 @@ end
 ]=]
 function CameraEffects.EnableEffect(effectName : string)
     saveCameraValues()
-    CameraEffects.effectsConnection[effectName] = bindCameraEffect(CameraEffects.effectsList[effectName])
+    CameraEffects.effectsConnections[effectName] = bindCameraEffect(CameraEffects.effectsList[effectName])
 end
 --[=[
     Disables a camera effect given it's name
 ]=]
 function CameraEffects.DisableEffect(effectName : string)
-    if not CameraEffects.effectsConnection[effectName] then return end
-    CameraEffects.effectsConnection[effectName]:Disconnect()
-    table.remove(CameraEffects.effectsConnection[effectName])
+    if not CameraEffects.effectsConnections[effectName] then return end
+    CameraEffects.effectsConnections[effectName]:Disconnect()
+    CameraEffects.effectsConnections[effectName] = nil
 end
 --[=[
     Disables all camera effects currently enabled
 ]=]
 function CameraEffects.DisableAllEffects()
-    for _, effectConnection in ipairs(CameraEffects.effectsConnections) do
-        CameraEffects.DisableEffect(effectConnection)
+    for effectName, _ in pairs(CameraEffects.effectsConnections) do
+        CameraEffects.DisableEffect(effectName)
     end
     applyOriginalValuesToCamera()
 end
