@@ -6,13 +6,13 @@ local CameraEffects = {}
 local EffectsPart = require(script.EffectsPart)
 --[=[
     @within CameraEffects
-    @prop valuesBeforeEffect
+    @prop valsBefore
     @private
     @readonly
     @ignore
     Contains the values of some property of the camera before any effect was applied to it
 ]=]
-CameraEffects.valuesBeforeEffect = {}
+CameraEffects.valsBefore = {}
 --[=[
     @within CameraEffects
     @prop playerCamera
@@ -24,21 +24,21 @@ CameraEffects.valuesBeforeEffect = {}
 CameraEffects.playerCamera = workspace:WaitForChild("Camera")
 --[=[
     @within CameraEffects
-    @prop effectsConnections
+    @prop conns
     @private
     @readonly
     @ignore
     Contains the connection of all the effects (when enabled)
 ]=]
-CameraEffects.effectsConnections = {}
+CameraEffects.conns = {}
 --[=[
     @within CameraEffects
-    @prop SustainedEffectsList
+    @prop SustainedList
     @private
     @readonly
     List of all the sustained effects
 ]=]
-CameraEffects.SustainedEffectsList = (function()
+CameraEffects.SustainedList = (function()
     local sustained = {}
     for _, effectModule in ipairs(script:FindFirstChild("Sustained"):GetChildren()) do
         sustained[effectModule.Name] = require(effectModule)
@@ -47,12 +47,12 @@ CameraEffects.SustainedEffectsList = (function()
 end)()
 --[=[
     @within CameraEffects
-    @prop OnceEffectsList
+    @prop OnceList
     @private
     @readonly
     List of all the Once effects
 ]=]
-CameraEffects.OnceEffectsList = (function()
+CameraEffects.OnceList = (function()
     local once = {}
     for _, effectModule in ipairs(script:FindFirstChild("Once"):GetChildren()) do
         once[effectModule.Name] = require(effectModule)
@@ -75,39 +75,31 @@ CameraEffects.effectsPart = EffectsPart.new()
 local function saveCameraValues()
     for _, valueName in ipairs({"CameraSubject", "CameraType", "DiagonalFieldOfView", "FieldOfView", 
     "FieldOfViewMode", "MaxAxisFieldOfView"}) do
-        CameraEffects.valuesBeforeEffect[valueName] = CameraEffects.playerCamera[valueName]
+        CameraEffects.valsBefore[valueName] = CameraEffects.playerCamera[valueName]
     end
-    CameraEffects.valuesBeforeEffect["CFrame"] = 
-        CameraEffects.valuesBeforeEffect["CameraSubject"].Parent:FindFirstChild("HumanoidRootPart").CFrame:Inverse():
+    CameraEffects.valsBefore["CFrame"] = 
+        CameraEffects.valsBefore["CameraSubject"].Parent:FindFirstChild("HumanoidRootPart").CFrame:Inverse():
         ToWorldSpace(CameraEffects.playerCamera.CFrame)
 end
 --[=[
     @within CameraEffects
     @private
     @ignore
-    Applies the values contained in CameraEffects.valuesBeforeEffect to CameraEffects.playerCamera 
+    Applies the values contained in CameraEffects.valsBefore to CameraEffects.playerCamera 
 ]=]
 local function applyOriginalValuesToCamera(t: number?)
     t = t or 1
-    local tween1 = game:GetService("TweenService"):Create(
-        game.Players.LocalPlayer.Character:FindFirstChild("Humanoid"),
-        TweenInfo.new(t), 
-        {CameraOffset = Vector3.new(0, 0, 0)}
+    local tween = game:GetService("TweenService"):Create(
+        CameraEffects.playerCamera, TweenInfo.new(t), {FieldOfView = CameraEffects.valsBefore["FieldOfView"]}
     )
-    local tween2 = game:GetService("TweenService"):Create(
-        CameraEffects.playerCamera, 
-        TweenInfo.new(t), 
-        {FieldOfView = CameraEffects.valuesBeforeEffect["FieldOfView"]}
-    )
-    tween1:Play()
-    tween2:Play()
-    tween2.Completed:Wait()
-    for name, value in pairs(CameraEffects.valuesBeforeEffect) do
+    tween:Play()
+    tween.Completed:Wait()
+    for name, value in pairs(CameraEffects.valsBefore) do
         if name ~= "FieldOfView" and name ~= "CFrame" then
             CameraEffects.playerCamera[name] = value
         end
     end
-    CameraEffects.valuesBeforeEffect = {}
+    CameraEffects.valsBefore = {}
 end
 --[=[
     @within CameraEffects
@@ -124,35 +116,35 @@ end
     Applies an effect from the Once folder
 ]=]
 function CameraEffects.ApplyEffectOnce(effectName : string, ...: any)
-    if not CameraEffects.OnceEffectsList[effectName] then warn("Effect "..effectName.." doesn't exist!")
+    if not CameraEffects.OnceList[effectName] then warn("Effect "..effectName.." doesn't exist!")
         return
     end
-    CameraEffects.OnceEffectsList[effectName](...)
+    CameraEffects.OnceList[effectName](...)
 end
 --[=[
     Enables an effect from the Sustained folder
 ]=]
 function CameraEffects.EnableSustained(effectName : string, ...: any)
-    if not CameraEffects.SustainedEffectsList[effectName] then warn("Effect "..effectName.." doesn't exist!") 
+    if not CameraEffects.SustainedList[effectName] then warn("Effect "..effectName.." doesn't exist!") 
         return 
     end
     saveCameraValues()
-    if #CameraEffects.effectsConnections == 0 then
+    if #CameraEffects.conns == 0 then
         CameraEffects.effectsPart:Enable()
     end
-    CameraEffects.effectsConnections[effectName] = bindSustainedEffect(CameraEffects.SustainedEffectsList[effectName](
+    CameraEffects.conns[effectName] = bindSustainedEffect(CameraEffects.SustainedList[effectName](
         CameraEffects.effectsPart, ...))
 end
 --[=[
     Disables the given camera effect of the Sustained folder
 ]=]
 function CameraEffects.DisableSustained(effectName : string)
-    if not CameraEffects.effectsConnections[effectName] then warn("Effect "..effectName.." doesn't exist!")
+    if not CameraEffects.conns[effectName] then warn("Effect "..effectName.." doesn't exist!")
         return
     end
-    CameraEffects.effectsConnections[effectName]:Disconnect()
-    CameraEffects.effectsConnections[effectName] = nil
-    if #CameraEffects.effectsConnections == 0 then
+    CameraEffects.conns[effectName]:Disconnect()
+    CameraEffects.conns[effectName] = nil
+    if #CameraEffects.conns == 0 then
         applyOriginalValuesToCamera() -- TODO, it might interfere with Once effects
         CameraEffects.effectsPart:Disable()
     end
@@ -161,7 +153,7 @@ end
     Disables all camera effects currently enabled of the Sustained folder
 ]=]
 function CameraEffects.DisableAllSustained()
-    for effectName, _ in pairs(CameraEffects.effectsConnections) do
+    for effectName, _ in pairs(CameraEffects.conns) do
         CameraEffects.DisableSustained(effectName)
     end
 end
