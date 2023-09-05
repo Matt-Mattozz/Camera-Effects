@@ -25,3 +25,4 @@ return function(toLookAt : Vector3 | BasePart, FOV : number?, time : number?, ea
         end
     end
 end]]
+return {}
