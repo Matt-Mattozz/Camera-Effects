@@ -1,3 +1,4 @@
+--!strict
 --[=[
     @class CameraEffects
     @client
@@ -5,15 +6,16 @@
 ]=]
 local CameraEffects = {}
 local SustainedCreator = require(script.SustainedCreator)
+type SustainedEffect = SustainedCreator.SustainedEffect
 local valsBefore = {}
 local playerCamera = workspace:WaitForChild("Camera")
 local conns = {}
 --[=[
     @within CameraEffects
-    @prop SustainedList
+    @prop SustainedList {[string] : SustainedCreator}
     @private
     @readonly
-    List of all the sustained effects
+    List of all the Sustained effects
 ]=]
 CameraEffects.SustainedList = {
     -- added each entry "the manual way" to make them show with autocomplete
@@ -22,18 +24,12 @@ CameraEffects.SustainedList = {
 }
 --[=[
     @within CameraEffects
-    @prop OnceList
+    @prop OnceList {[number] : any}
     @private
     @readonly
     List of all the Once effects
 ]=]
-CameraEffects.OnceList = (function()
-    local once = {}
-    for _, effectModule in ipairs(script:FindFirstChild("Once"):GetChildren()) do
-        once[effectModule.Name] = require(effectModule)
-    end
-    return once
-end)()
+CameraEffects.OnceList = {}
 --[=[
     @within CameraEffects
     @private
@@ -50,7 +46,7 @@ end
     @within CameraEffects
     @private
     @ignore
-    Applies the values contained in valsBefore to playerCamera 
+    Applies to the current camera the values of the current camera before any effect was enabled
 ]=]
 local function applyOriginalValuesToCamera(t: number?)
     t = t or 1
@@ -72,7 +68,7 @@ end
 --[=[
     Enables an effect from the Sustained folder
 ]=]
-function CameraEffects.EnableSustained(sustainedCreatorInstance : SustainedCreator, ...: any)
+function CameraEffects.EnableSustained(sustainedCreatorInstance : SustainedEffect, ...: any)
     saveCameraValues()
     sustainedCreatorInstance:Enable()
     table.insert(conns, sustainedCreatorInstance)
@@ -80,7 +76,7 @@ end
 --[=[
     Disables the given camera effect of the Sustained folder
 ]=]
-function CameraEffects.DisableSustained(sustainedCreatorInstance : SustainedCreator)
+function CameraEffects.DisableSustained(sustainedCreatorInstance : SustainedEffect)
     -- if not table.find(conns, sustainedCreatorInstance) then error
     sustainedCreatorInstance:Disable()
     table.remove(conns, table.find(conns, sustainedCreatorInstance))

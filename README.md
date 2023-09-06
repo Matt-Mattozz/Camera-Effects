@@ -5,20 +5,22 @@ Enable and disable pre-made and custom camera effects
 
 ### How to apply camera effects
 
-1. Require the module CameraEffects
-2. To enable an effect, call the function CameraEffects.EnableEffect(effectName : string) , where effectName is the name of the module containing the effect
-3. To disable an effect, call the function CameraEffects.DisableEffect(effectName : string) or CameraEffects.DisableAllEffects()
+- Sustained effects:
+    - To enable an effect, call the function CameraEffects.EnableEffect(CameraEffects.SustainedEffectsList[effectName])
+    - To disable an effect, call the function CameraEffects.DisableEffect(CameraEffects.SustainedEffectsList[effectName]) or CameraEffects.DisableAllEffects()
+- Once effects: W.I.P.
 
 ### How to create a custom camera effect
 
-1. Create a ModuleScript that returns a function. In this function put the code of the effect
-To obtain the local player's camera, use workspace.CurrentCamera
-To obtain the local player's character, use game:GetService("Players").LocalPlayer
+- Sustained: Create a ModuleScript that returns a function. This function must accept as first parameter a number, which is the current timestamp of the effect progression (like a os.clock(), but relative to the life of the effect), and must return a Vector3. Inside the function put the code of the effect
+- Once: W.I.P.
 
 ### Pre-made effects:
 
-- Bounce : the camera goes up and down with respect to the CameraSubject
-- Wobble : the camera goes in a circle around the CameraSubject
+- Sustained
+    - Bounce : the camera goes up and down with respect to the CameraSubject
+    - Wobble : the camera goes in a circle around the CameraSubject
+- Once: W.I.P.
 
 *  *  *
 

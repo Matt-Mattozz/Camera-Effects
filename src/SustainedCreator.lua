@@ -19,12 +19,12 @@ local humanoid = character:WaitForChild("Humanoid")
 ]=]
 type SustainedEffectProperties = {
     Name : string,
-    Function : (...any) -> (),
+    Function : (...any) -> (Vector3),
     Parameters : {any},
     _totalTime : number
 }
 --[=[
-    @type SustainedEffect
+    @type SustainedEffect typeof(setmetatable({} :: SustainedEffectProperties, SustainedCreator))
     @within SustainedCreator
     Sustained effect instance
 ]=]
@@ -32,7 +32,7 @@ export type SustainedEffect = typeof(setmetatable({} :: SustainedEffectPropertie
 --[=[
     Constructor for the class
 ]=]
-function SustainedCreator.new(name : string, func : (...any) -> (), ...: any)
+function SustainedCreator.new(name : string, func : (...any) -> (Vector3), ...: any)
     local self = {
         Name = name,
         Function = func,
@@ -48,7 +48,7 @@ end
     @ignore
     Gets the first position returned by the effect that will become the Humanoid.CameraOffset
 ]=]
-local function GetFirstPosition(effect : effectModule)
+local function GetFirstPosition(effect : SustainedEffect) : Vector3
     return effect["Function"](effect["_totalTime"], table.unpack(effect["Parameters"]))
 end
 --[=[
@@ -57,7 +57,7 @@ end
     @ignore
     Places the camera at the first position returned by the effect
 ]=]
-local function PlaceAtFirstPosition(effect : effectModule)
+local function PlaceAtFirstPosition(effect : SustainedEffect)
     local firstPosition = GetFirstPosition(effect)
     if (firstPosition - humanoid.CameraOffset).Magnitude > 0.25 then
         local tween = game:GetService("TweenService"):Create(humanoid, TweenInfo.new(.1), {CameraOffset = firstPosition})
@@ -73,7 +73,7 @@ function SustainedCreator:Enable()
     game:GetService("RunService"):BindToRenderStep(
         self["Name"], 
         Enum.RenderPriority.Camera.Value, 
-        function(t)
+        function(t : number)
             humanoid.CameraOffset = self["Function"](self["_totalTime"], table.unpack(self["Parameters"])) 
             self["_totalTime"] += t
         end
@@ -100,7 +100,7 @@ end
     --  for some reason the parameters after the hole will not be read inside the function
 ]=]
 function SustainedCreator:UpdateParameter(parameterIndex : number, value : any)
-    self:Disable()
+    self:Pause()
     self["Parameters"][parameterIndex] = value
     self:Enable()
 end
