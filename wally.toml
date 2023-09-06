@@ -1,8 +1,8 @@
 [package]
 name = "mattozzo/camera-effects"
 description = "Enable and disable pre-made and custom camera effects"
-license = "Unlicense"
-version = "0.1.0"
+license = "MIT"
+version = "1.0.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
