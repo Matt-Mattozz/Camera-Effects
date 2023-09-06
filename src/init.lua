@@ -1,36 +1,13 @@
 --[=[
     @class CameraEffects
+    @client
     Apply and remove custom and pre-made effects for the Camera
 ]=]
 local CameraEffects = {}
 local SustainedCreator = require(script.SustainedCreator)
---[=[
-    @within CameraEffects
-    @prop valsBefore
-    @private
-    @readonly
-    @ignore
-    Contains the values of some property of the camera before any effect was applied to it
-]=]
-CameraEffects.valsBefore = {}
---[=[
-    @within CameraEffects
-    @prop playerCamera
-    @private
-    @readonly
-    @ignore
-    Local player's camera
-]=]
-CameraEffects.playerCamera = workspace:WaitForChild("Camera")
---[=[
-    @within CameraEffects
-    @prop conns
-    @private
-    @readonly
-    @ignore
-    Contains the connection of all the effects (when enabled)
-]=]
-CameraEffects.conns = {}
+local valsBefore = {}
+local playerCamera = workspace:WaitForChild("Camera")
+local conns = {}
 --[=[
     @within CameraEffects
     @prop SustainedList
@@ -40,16 +17,9 @@ CameraEffects.conns = {}
 ]=]
 CameraEffects.SustainedList = {
     -- added each entry "the manual way" to make them show with autocomplete
-    ["Wobble"] = SustainedCreator.new(require(script:FindFirstChild("Sustained"):FindFirstChild("Wobble"))),
-    ["Bounce"] = SustainedCreator.new(require(script:FindFirstChild("Sustained"):FindFirstChild("Bounce")))
+    ["Wobble"] = SustainedCreator.new("Wobble", require(script:FindFirstChild("Sustained"):FindFirstChild("Wobble"))),
+    ["Bounce"] = SustainedCreator.new("Bounce", require(script:FindFirstChild("Sustained"):FindFirstChild("Bounce")))
 }
---[[(function()
-    local sustained = {}
-    for _, effectModule in ipairs(script:FindFirstChild("Sustained"):GetChildren()) do
-        sustained[effectModule.Name] = SustainedCreator.new(require(effectModule))
-    end
-    return sustained
-end)()]]
 --[=[
     @within CameraEffects
     @prop OnceList
@@ -71,35 +41,24 @@ end)()
     Saves the current camera values
 ]=]
 local function saveCameraValues()
-    CameraEffects.valsBefore["FieldOfView"] = CameraEffects.playerCamera["FieldOfView"]
-    --CameraEffects.valsBefore["CFrame"] = 
-      --  CameraEffects.valsBefore["CameraSubject"].Parent:FindFirstChild("HumanoidRootPart").CFrame:Inverse():
-        --ToWorldSpace(CameraEffects.playerCamera.CFrame)
+    valsBefore["FieldOfView"] = playerCamera["FieldOfView"]
+    --valsBefore["CFrame"] = 
+      --  valsBefore["CameraSubject"].Parent:FindFirstChild("HumanoidRootPart").CFrame:Inverse():
+        --ToWorldSpace(playerCamera.CFrame)
 end
 --[=[
     @within CameraEffects
     @private
     @ignore
-    Applies the values contained in CameraEffects.valsBefore to CameraEffects.playerCamera 
+    Applies the values contained in valsBefore to playerCamera 
 ]=]
 local function applyOriginalValuesToCamera(t: number?)
     t = t or 1
     local tween = game:GetService("TweenService"):Create(
-        CameraEffects.playerCamera, TweenInfo.new(t), {FieldOfView = CameraEffects.valsBefore["FieldOfView"]}
+        playerCamera, TweenInfo.new(t), {FieldOfView = valsBefore["FieldOfView"]}
     )
     tween:Play()
-    CameraEffects.valsBefore = {}
-end
---[=[
-    @within CameraEffects
-    @private
-    @ignore
-    Binds the function of an effect to the RenderStepped event of RunService
-]=]
-local function bindSustainedEffect(sustainedCreatorInstance : SustainedCreator)
-    return game:GetService("RunService").RenderStepped:Connect(function()
-        sustainedCreatorInstance["Function"](table.unpack(sustainedCreatorInstance["Parameters"]))
-    end)
+    valsBefore = {}
 end
 --[=[
     Applies an effect from the Once folder
@@ -115,15 +74,17 @@ end
 ]=]
 function CameraEffects.EnableSustained(sustainedCreatorInstance : SustainedCreator, ...: any)
     saveCameraValues()
-    CameraEffects.conns[sustainedCreatorInstance] = bindSustainedEffect(sustainedCreatorInstance)
+    sustainedCreatorInstance:Enable()
+    table.insert(conns, sustainedCreatorInstance)
 end
 --[=[
     Disables the given camera effect of the Sustained folder
 ]=]
 function CameraEffects.DisableSustained(sustainedCreatorInstance : SustainedCreator)
-    CameraEffects.conns[sustainedCreatorInstance]:Disconnect()
-    CameraEffects.conns[sustainedCreatorInstance] = nil
-    if #CameraEffects.conns == 0 then
+    -- if not table.find(conns, sustainedCreatorInstance) then error
+    sustainedCreatorInstance:Disable()
+    table.remove(conns, table.find(conns, sustainedCreatorInstance))
+    if #conns == 0 then
         local t = game:GetService("TweenService"):Create(
             game.Players.LocalPlayer.Character.Humanoid, TweenInfo.new(0.5), {CameraOffset = Vector3.new(0, 0, 0)})
         t:Play()
@@ -135,8 +96,8 @@ end
     Disables all camera effects currently enabled of the Sustained folder
 ]=]
 function CameraEffects.DisableAllSustained()
-    for effectName, _ in pairs(CameraEffects.conns) do
-        CameraEffects.DisableSustained(effectName)
+    for _, effect in pairs(conns) do
+        CameraEffects.DisableSustained(effect)
     end
 end
 
