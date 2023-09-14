@@ -30,19 +30,6 @@ type SustainedEffectProperties = {
 ]=]
 export type SustainedEffect = typeof(setmetatable({} :: SustainedEffectProperties, SustainedCreator))
 --[=[
-    Constructor for the class
-]=]
-function SustainedCreator.new(name : string, func : (...any) -> (Vector3), ...: any)
-    local self = {
-        Name = name,
-        Function = func,
-        Parameters = {...},
-        _totalTime = 0,
-        -- Connection
-    } :: SustainedEffectProperties
-    return setmetatable(self, SustainedCreator) :: SustainedEffect
-end
---[=[
     @within SustainedCreator
     @private
     @ignore
@@ -66,15 +53,33 @@ local function PlaceAtFirstPosition(effect : SustainedEffect)
     end
 end
 --[=[
+    Constructor for the class
+]=]
+function SustainedCreator.new(name : string, func : (...any) -> (Vector3), ...: any)
+    assert(typeof(name) == "string", "expected type string, got " .. typeof(name) .." instead.")
+    assert(typeof(func) == "function", "expected type string, got " .. typeof(name) .." instead.")
+    if typeof(func() ~= "Vector3") then error("function should return a value of type Vector3, but returned ".. typeof(func()) .." instead.") end
+
+    local self = {
+        Name = name,
+        Function = func,
+        Parameters = {...},
+        _totalTime = 0,
+    } :: SustainedEffectProperties
+
+    return setmetatable(self, SustainedCreator) :: SustainedEffect
+end
+--[=[
     Enables the effect
 ]=]
 function SustainedCreator:Enable()
+    if self["_localTime"] >= 0 then return end
     PlaceAtFirstPosition(self)
     game:GetService("RunService"):BindToRenderStep(
         self["Name"], 
         Enum.RenderPriority.Camera.Value, 
         function(t : number)
-            humanoid.CameraOffset = self["Function"](self["_totalTime"], table.unpack(self["Parameters"])) 
+            humanoid.CameraOffset = self["Function"](self["_totalTime"], table.unpack(self["Parameters"]))
             self["_totalTime"] += t
         end
     )
@@ -96,8 +101,6 @@ function SustainedCreator:Disable()
 end
 --[=[
     Updates a parameter
-    -- Issue: If you modify a parameter whose [parameterIndex > 1] and the array has holes (example: {[1] = "a", [3] = "c"}),
-    --  for some reason the parameters after the hole will not be read inside the function
 ]=]
 function SustainedCreator:UpdateParameter(parameterIndex : number, value : any)
     self:Pause()

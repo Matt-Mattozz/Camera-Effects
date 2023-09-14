@@ -9,7 +9,7 @@ local SustainedCreator = require(script.SustainedCreator)
 type SustainedEffect = SustainedCreator.SustainedEffect
 local valsBefore = {}
 local playerCamera = workspace:WaitForChild("Camera")
-local conns = {}
+local effectsEnabled = {}
 --[=[
     @within CameraEffects
     @prop SustainedList {[string] : SustainedCreator}
@@ -68,19 +68,20 @@ end
 --[=[
     Enables an effect from the Sustained folder
 ]=]
-function CameraEffects.EnableSustained(sustainedCreatorInstance : SustainedEffect, ...: any)
+function CameraEffects.EnableSustained(sustainedEffect : SustainedEffect, ...: any)
     saveCameraValues()
-    sustainedCreatorInstance:Enable()
-    table.insert(conns, sustainedCreatorInstance)
+    sustainedEffect:Enable()
+    table.insert(effectsEnabled, sustainedEffect)
 end
 --[=[
     Disables the given camera effect of the Sustained folder
 ]=]
-function CameraEffects.DisableSustained(sustainedCreatorInstance : SustainedEffect)
-    -- if not table.find(conns, sustainedCreatorInstance) then error
-    sustainedCreatorInstance:Disable()
-    table.remove(conns, table.find(conns, sustainedCreatorInstance))
-    if #conns == 0 then
+function CameraEffects.DisableSustained(sustainedEffect : SustainedEffect)
+    local findIndex = table.find(effectsEnabled, sustainedEffect)
+    if not findIndex then return end
+    sustainedEffect:Disable()
+    table.remove(effectsEnabled, findIndex)
+    if #effectsEnabled == 0 then
         local t = game:GetService("TweenService"):Create(
             game.Players.LocalPlayer.Character.Humanoid, TweenInfo.new(0.5), {CameraOffset = Vector3.new(0, 0, 0)})
         t:Play()
@@ -92,7 +93,7 @@ end
     Disables all camera effects currently enabled of the Sustained folder
 ]=]
 function CameraEffects.DisableAllSustained()
-    for _, effect in pairs(conns) do
+    for _, effect in pairs(effectsEnabled) do
         CameraEffects.DisableSustained(effect)
     end
 end
