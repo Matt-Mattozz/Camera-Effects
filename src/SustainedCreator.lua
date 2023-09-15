@@ -6,7 +6,7 @@
 local SustainedCreator = {}
 SustainedCreator.__index = SustainedCreator
 local player = game.Players.LocalPlayer
-local character = player.Character
+local character = if player.Character then player.Character else player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 --[=[
     @interface SustainedEffectProperties
@@ -57,8 +57,8 @@ end
 ]=]
 function SustainedCreator.new(name : string, func : (...any) -> (Vector3), ...: any)
     assert(typeof(name) == "string", "expected type string, got " .. typeof(name) .." instead.")
-    assert(typeof(func) == "function", "expected type string, got " .. typeof(name) .." instead.")
-    if typeof(func() ~= "Vector3") then error("function should return a value of type Vector3, but returned ".. typeof(func()) .." instead.") end
+    assert(typeof(func) == "function", "expected type function, got " .. typeof(func) .." instead.")
+    if typeof(func(0)) ~= typeof(Vector3.new()) then error("function should return a value of type Vector3, but returned ".. typeof(func(0)) .." instead.") end
 
     local self = {
         Name = name,
@@ -73,16 +73,18 @@ end
     Enables the effect
 ]=]
 function SustainedCreator:Enable()
-    if self["_localTime"] >= 0 then return end
+    -- protects the effect from being activated multiple times, resulting in the effect reproduction being faster than intended
+    if self["_totalTime"] > 0 then return false else self["_totalTime"] = 0.05 end
     PlaceAtFirstPosition(self)
     game:GetService("RunService"):BindToRenderStep(
         self["Name"], 
-        Enum.RenderPriority.Camera.Value, 
+        Enum.RenderPriority.Camera.Value,
         function(t : number)
             humanoid.CameraOffset = self["Function"](self["_totalTime"], table.unpack(self["Parameters"]))
             self["_totalTime"] += t
         end
     )
+    return true
 end
 --[=[
     Pauses the effect. Once restarted the Humanoid.CameraOffset will be the same of when the effect was paused and
@@ -107,6 +109,5 @@ function SustainedCreator:UpdateParameter(parameterIndex : number, value : any)
     self["Parameters"][parameterIndex] = value
     self:Enable()
 end
-
 
 return SustainedCreator

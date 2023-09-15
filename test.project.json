@@ -1,0 +1,26 @@
+{
+    "name": "Camera effects - test",
+    "tree": {
+        "$className": "DataModel",
+  
+        "StarterPlayer": {
+            "StarterPlayerScripts": {
+                "CameraEffects": {
+                    "$path": "src"
+                },
+
+                "TestEZ": {
+                    "$path": "test/testez/src"
+                },
+    
+                "runTests": {
+                    "$path":"test/test.client.lua",
+                    "TestCases": {
+                        "$path": "test/testCases"
+                    }
+                }
+            }
+        }
+
+    }
+}

@@ -1,4 +1,4 @@
-local CameraEffects = require(script.Parent.Parent:WaitForChild("src"):WaitForChild("CameraEffects"))
+local CameraEffects = require(script.Parent.Parent.Parent:WaitForChild("CameraEffects"))
 
 return function()
     describe("CameraEffects.SustainedList", function()
@@ -18,17 +18,21 @@ return function()
         
         it("enables the Wobble effect", function()
             CameraEffects.EnableSustained(CameraEffects.SustainedList.Wobble)
-            task.wait(0.5)
-            expect(CameraEffects.SustainedList.Wobble["_totalTime"]).to.be.near(0.5, 0.3)
+            local initTime = os.clock()
+            task.wait(.2)
+            expect(CameraEffects.SustainedList.Wobble["_totalTime"]).to.be.near(os.clock()-initTime, .05)
             CameraEffects.DisableSustained(CameraEffects.SustainedList.Wobble)
         end)
 
         it("enables the Wobble effect only once and ignores the other invocations", function()
-            for i = 1, 6 do -- enables it multiple times to make sure the invocations after the first are ignored
+            CameraEffects.EnableSustained(CameraEffects.SustainedList.Wobble)
+            local initTime = os.clock()
+            for i = 1, 5 do -- enables it multiple times to make sure the invocations after the first are ignored
                 CameraEffects.EnableSustained(CameraEffects.SustainedList.Wobble)
             end
-            task.wait(0.5)
-            expect(CameraEffects.SustainedList.Wobble["_totalTime"]).to.be.near(0.5, 0.5)
+            task.wait(.2)
+            expect(CameraEffects.SustainedList.Wobble["_totalTime"]).to.be.near(os.clock()-initTime, .05)
+            CameraEffects.DisableAllSustained()
         end)
 
     end)

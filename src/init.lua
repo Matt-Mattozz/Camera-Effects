@@ -9,7 +9,7 @@ local SustainedCreator = require(script.SustainedCreator)
 type SustainedEffect = SustainedCreator.SustainedEffect
 local valsBefore = {}
 local playerCamera = workspace:WaitForChild("Camera")
-local effectsEnabled = {}
+local db = false
 --[=[
     @within CameraEffects
     @prop SustainedList {[string] : SustainedCreator}
@@ -69,31 +69,33 @@ end
     Enables an effect from the Sustained folder
 ]=]
 function CameraEffects.EnableSustained(sustainedEffect : SustainedEffect, ...: any)
-    saveCameraValues()
+    if db then repeat task.wait() until not db end
+    db = true
     sustainedEffect:Enable()
-    table.insert(effectsEnabled, sustainedEffect)
+    saveCameraValues()
+    db = false
 end
 --[=[
     Disables the given camera effect of the Sustained folder
 ]=]
 function CameraEffects.DisableSustained(sustainedEffect : SustainedEffect)
-    local findIndex = table.find(effectsEnabled, sustainedEffect)
-    if not findIndex then return end
     sustainedEffect:Disable()
-    table.remove(effectsEnabled, findIndex)
-    if #effectsEnabled == 0 then
-        local t = game:GetService("TweenService"):Create(
-            game.Players.LocalPlayer.Character.Humanoid, TweenInfo.new(0.5), {CameraOffset = Vector3.new(0, 0, 0)})
-        t:Play()
-        t.Completed:Wait()
-        applyOriginalValuesToCamera() -- TODO, it might interfere with Once effects
+    for _, effect in pairs(CameraEffects.SustainedList) do
+        if effect["_totalTime"] > 0 then -- there's not the possibility that one effect may be paused because CameraEffects class doesn't offer this possibility
+            return
+        end
     end
+    local t = game:GetService("TweenService"):Create(
+        game.Players.LocalPlayer.Character.Humanoid, TweenInfo.new(0.5), {CameraOffset = Vector3.new(0, 0, 0)})
+    t:Play()
+    t.Completed:Wait()
+    applyOriginalValuesToCamera() -- TODO, it might interfere with Once effects
 end
 --[=[
     Disables all camera effects currently enabled of the Sustained folder
 ]=]
 function CameraEffects.DisableAllSustained()
-    for _, effect in pairs(effectsEnabled) do
+    for _, effect in pairs(CameraEffects.SustainedList) do
         CameraEffects.DisableSustained(effect)
     end
 end

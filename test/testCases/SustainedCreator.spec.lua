@@ -1,4 +1,4 @@
-local SustainedCreator = require(script.Parent.Parent:WaitForChild("src"):WaitForChild("SustainedCreator"))
+local SustainedCreator = require(script.Parent.Parent.Parent:WaitForChild("CameraEffects"):WaitForChild("SustainedCreator"))
 
 return function()
 
@@ -13,15 +13,16 @@ return function()
         end)
 
         it("should throw an invalid name type error", function()
-            expect(SustainedCreator.new(0)).to.throw("expected type string, got number instead.")
+            expect(function() SustainedCreator.new(0) end).to.throw("expected type string, got number instead.")
         end)
 
         it("should throw an invalid function type error", function()
-            expect(SustainedCreator.new("test", 0)).to.throw("expected type function, got number instead.")
+            expect(function() SustainedCreator.new("test", 0) end).to.throw("expected type function, got number instead.")
         end)
 
         it("should throw an invalid function return type error", function()
-            expect(SustainedCreator.new("test", function() return 0 end)).to.throw("function should return a value of type Vector3, but returned number instead.")
+            expect(function() SustainedCreator.new("test", function() return 0 end) end).to.throw(
+                "function should return a value of type Vector3, but returned number instead.")
         end)
 
     end)
@@ -29,7 +30,7 @@ return function()
     describe("SustainedCreator:Enable", function()
 
         it("should enable the custom effect", function()
-            local effect = SustainedCreator.new("test", function(a) return Vector3.new() end)
+            local effect = SustainedCreator.new("test1", function(a) return Vector3.new() end)
             effect:Enable()
             task.wait(.2)
             effect:Pause()
@@ -37,7 +38,7 @@ return function()
         end)
 
         it("should enable the custom effect only once and ignore the other invocations", function()
-            local effect = SustainedCreator.new("test", function(a) return Vector3.new() end)
+            local effect = SustainedCreator.new("test2", function(a) return Vector3.new() end)
             for i = 1, 6 do
                 effect:Enable()
             end
@@ -51,7 +52,7 @@ return function()
     describe("SustainedCreator:Pause", function()
     
         it("should pause the custom effect", function()
-            local effect = SustainedCreator.new("test", function(a) return Vector3.new() end)
+            local effect = SustainedCreator.new("test3", function(a) return Vector3.new() end)
             effect:Enable()
             task.wait(.2)
             effect:Pause()
@@ -59,7 +60,7 @@ return function()
         end)
 
         it("should ignore the method call (because the effect is not enabled)", function()
-            local effect = SustainedCreator.new("test", function(a) return Vector3.new() end)
+            local effect = SustainedCreator.new("test4", function(a) return Vector3.new() end)
             effect:Pause()
         end)
 
@@ -68,7 +69,7 @@ return function()
     describe("SustainedCreator:Disable", function()
     
         it("should disable the custom effect", function()
-            local effect = SustainedCreator.new("test", function(a) return Vector3.new() end)
+            local effect = SustainedCreator.new("test5", function(a) return Vector3.new() end)
             effect:Enable()
             task.wait(.2)
             effect:Disable()
@@ -77,7 +78,7 @@ return function()
         end)
 
         it("should ignore the method call (because the effect is not enabled)", function()
-            local effect = SustainedCreator.new("test", function(a) return Vector3.new() end)
+            local effect = SustainedCreator.new("test6", function(a) return Vector3.new() end)
             effect:Disable()
         end)
 
